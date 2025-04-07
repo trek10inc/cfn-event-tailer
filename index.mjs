@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { fileURLToPath } from "url";
 import {
   CloudFormation,
   DescribeStackEventsCommand,
