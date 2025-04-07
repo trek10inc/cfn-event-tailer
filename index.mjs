@@ -1,10 +1,19 @@
 #!/usr/bin/env node
-const AWS = require('aws-sdk');
 
-const CloudFormation = new AWS.CloudFormation();
+import {
+  CloudFormation,
+  DescribeStackEventsCommand,
+} from "@aws-sdk/client-cloudformation";
 
-const TERMINAL_EVENT_STATUS_SUFFIXES = ['_COMPLETE', '_FAILED', '_SKIPPED'];
-const SUCCESSFUL_EVENT_STATUSES = ['CREATE_COMPLETE', 'DELETE_COMPLETE', 'UPDATE_COMPLETE', 'IMPORT_COMPLETE'];
+const cfn = new CloudFormation();
+
+const TERMINAL_EVENT_STATUS_SUFFIXES = ["_COMPLETE", "_FAILED", "_SKIPPED"];
+const SUCCESSFUL_EVENT_STATUSES = [
+  "CREATE_COMPLETE",
+  "DELETE_COMPLETE",
+  "UPDATE_COMPLETE",
+  "IMPORT_COMPLETE",
+];
 
 function chunkString(str, length) {
   const numChunks = Math.ceil(str.length / length);
@@ -21,7 +30,8 @@ function chunkString(str, length) {
  * @param {import('aws-sdk').CloudFormation.StackEvent} stackEvent
  */
 function logStackEvent(stackEvent) {
-  const numberOfTerminalColumns = Math.floor(process.stdout.columns * 0.8) || 132;
+  const numberOfTerminalColumns =
+    Math.floor(process.stdout.columns * 0.8) || 132;
   const columnWidths = [
     numberOfTerminalColumns / 5,
     24,
@@ -36,18 +46,23 @@ function logStackEvent(stackEvent) {
     chunkString(stackEvent.LogicalResourceId, columnWidths[2]),
     chunkString(stackEvent.ResourceType, columnWidths[3]),
     chunkString(stackEvent.ResourceStatus, columnWidths[4]),
-    chunkString(stackEvent.ResourceStatusReason || '', columnWidths[5]),
+    chunkString(stackEvent.ResourceStatusReason || "", columnWidths[5]),
   ];
-  const numberOfLines = logLines.map((arr) => arr.length).sort((a, b) => a - b).pop();
+  const numberOfLines = logLines
+    .map((arr) => arr.length)
+    .sort((a, b) => a - b)
+    .pop();
   for (let i = 0; i < numberOfLines; i++) {
-    console.log([
-      (logLines?.[0]?.[i] || '').padEnd(columnWidths[0]),
-      (logLines?.[1]?.[i] || '').padEnd(columnWidths[1]),
-      (logLines?.[2]?.[i] || '').padEnd(columnWidths[2]),
-      (logLines?.[3]?.[i] || '').padEnd(columnWidths[3]),
-      (logLines?.[4]?.[i] || '').padEnd(columnWidths[4]),
-      (logLines?.[5]?.[i] || '').padEnd(columnWidths[5]),
-    ].join('  '));
+    console.log(
+      [
+        (logLines?.[0]?.[i] || "").padEnd(columnWidths[0]),
+        (logLines?.[1]?.[i] || "").padEnd(columnWidths[1]),
+        (logLines?.[2]?.[i] || "").padEnd(columnWidths[2]),
+        (logLines?.[3]?.[i] || "").padEnd(columnWidths[3]),
+        (logLines?.[4]?.[i] || "").padEnd(columnWidths[4]),
+        (logLines?.[5]?.[i] || "").padEnd(columnWidths[5]),
+      ].join("  "),
+    );
   }
 }
 
@@ -56,18 +71,26 @@ function logStackEvent(stackEvent) {
  * @param {import('aws-sdk').CloudFormation.StackEvent} event
  */
 function isTerminalStackEvent(stackName, event) {
-  return event.ResourceType === 'AWS::CloudFormation::Stack'
-    && event.LogicalResourceId === stackName
-    && !!TERMINAL_EVENT_STATUS_SUFFIXES.find((suffix) => event.ResourceStatus.endsWith(suffix));
+  return (
+    event.ResourceType === "AWS::CloudFormation::Stack" &&
+    event.LogicalResourceId === stackName &&
+    !!TERMINAL_EVENT_STATUS_SUFFIXES.find((suffix) =>
+      event.ResourceStatus.endsWith(suffix),
+    )
+  );
 }
 
 async function safeDescribeStackEvents(stackName, tries = 0) {
   try {
-    const response = await CloudFormation.describeStackEvents({ StackName: stackName }).promise();
+    const response = await cfn.send(
+      new DescribeStackEventsCommand({ StackName: stackName }),
+    );
     return response.StackEvents;
   } catch (err) {
-    if (tries < 5 && err.code === 'Throttling') {
-      await new Promise((resolve) => { setTimeout(resolve, 1000); });
+    if (tries < 5 && err.code === "Throttling") {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000);
+      });
       return safeDescribeStackEvents(stackName, tries + 1);
     }
     throw err;
@@ -84,8 +107,8 @@ async function tailStackEvents(stackName) {
   let lastTerminalEventIndex;
 
   const stackId = stackName;
-  if (stackName.startsWith('arn:')) {
-    stackName = stackName.split('/')[1];
+  if (stackName.startsWith("arn:")) {
+    stackName = stackName.split("/")[1];
   }
   // kep track of stacks we're tailing
   const tailingStacks = {
@@ -94,7 +117,9 @@ async function tailStackEvents(stackName) {
 
   /** @type {import('aws-sdk').CloudFormation.StackEvents} */
   let stackEvents = await safeDescribeStackEvents(stackId);
-  const lastExecutionTerminalEvent = stackEvents.find((event) => isTerminalStackEvent(stackName, event));
+  const lastExecutionTerminalEvent = stackEvents.find((event) =>
+    isTerminalStackEvent(stackName, event),
+  );
   if (stackEvents.indexOf(lastExecutionTerminalEvent) === 0) {
     console.log(`${stackName}: No currently running stack update`);
     return;
@@ -103,20 +128,27 @@ async function tailStackEvents(stackName) {
   do {
     // get stack events
     try {
-      stackEvents = (await CloudFormation.describeStackEvents({
-        StackName: stackId,
-      }).promise()).StackEvents;
+      stackEvents = (
+        await cfn.send(new DescribeStackEventsCommand({ StackName: stackId }))
+      ).StackEvents;
     } catch (err) {
-      if (err?.code === 'Throttling') {
+      if (err?.code === "Throttling") {
         continue;
       }
       throw err;
     }
 
     // filter out previous executions
-    lastTerminalEventIndex = stackEvents.map((x) => x.EventId).indexOf(lastExecutionTerminalEvent?.EventId);
+    lastTerminalEventIndex = stackEvents
+      .map((x) => x.EventId)
+      .indexOf(lastExecutionTerminalEvent?.EventId);
     if (lastTerminalEventIndex !== -1) {
-      stackEventsToLog = stackEvents.slice(0, stackEvents.map((x) => x.EventId).indexOf(lastExecutionTerminalEvent?.EventId));
+      stackEventsToLog = stackEvents.slice(
+        0,
+        stackEvents
+          .map((x) => x.EventId)
+          .indexOf(lastExecutionTerminalEvent?.EventId),
+      );
     } else {
       // if this is the first execution of the stack
       stackEventsToLog = stackEvents;
@@ -124,7 +156,10 @@ async function tailStackEvents(stackName) {
 
     // trim out old events
     if (lastLoggedStackEvent) {
-      stackEventsToLog = stackEventsToLog.slice(0, stackEvents.map((x) => x.EventId).indexOf(lastLoggedStackEvent.EventId));
+      stackEventsToLog = stackEventsToLog.slice(
+        0,
+        stackEvents.map((x) => x.EventId).indexOf(lastLoggedStackEvent.EventId),
+      );
     }
 
     // sort events before logging
@@ -136,27 +171,39 @@ async function tailStackEvents(stackName) {
       // kick off new tail for nested stacks
       if (
         // is nested stack
-        event.ResourceType === 'AWS::CloudFormation::Stack'
-        && event.LogicalResourceId !== stackName
-        && event.PhysicalResourceId
+        event.ResourceType === "AWS::CloudFormation::Stack" &&
+        event.LogicalResourceId !== stackName &&
+        event.PhysicalResourceId &&
         // not already being tailed
-        && !Object.keys(tailingStacks).includes(event.PhysicalResourceId)
+        !Object.keys(tailingStacks).includes(event.PhysicalResourceId)
       ) {
-        tailingStacks[event.PhysicalResourceId] = tailStackEvents(event.PhysicalResourceId);
+        tailingStacks[event.PhysicalResourceId] = tailStackEvents(
+          event.PhysicalResourceId,
+        );
       }
     }
 
     // sleep for 1 second
-    await new Promise((resolve) => { setTimeout(resolve, 1000); });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
 
     // while we can't find a terminal stack event
-    currentExecutionTerminalEvent = stackEventsToLog.find((event) => isTerminalStackEvent(stackName, event));
+    currentExecutionTerminalEvent = stackEventsToLog.find((event) =>
+      isTerminalStackEvent(stackName, event),
+    );
   } while (!currentExecutionTerminalEvent);
   await Promise.all(Object.values(tailingStacks));
 
   // check final stack event
-  if (!SUCCESSFUL_EVENT_STATUSES.includes(currentExecutionTerminalEvent.ResourceStatus)) {
-    console.error(`${stackName} ${currentExecutionTerminalEvent.ResourceStatus}`);
+  if (
+    !SUCCESSFUL_EVENT_STATUSES.includes(
+      currentExecutionTerminalEvent.ResourceStatus,
+    )
+  ) {
+    console.error(
+      `${stackName} ${currentExecutionTerminalEvent.ResourceStatus}`,
+    );
     process.exit(1);
   }
 }
@@ -172,11 +219,10 @@ Usage:
 function main() {
   const stackName = process.argv[2];
   if (!stackName) showUsageAndExit();
-  tailStackEvents(process.argv[2])
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    });
+  tailStackEvents(process.argv[2]).catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 
 if (require.main === module) {
