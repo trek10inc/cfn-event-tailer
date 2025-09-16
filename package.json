@@ -1,6 +1,6 @@
 {
   "name": "cfn-event-tailer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Tail the events of a CloudFormation stack, including nested stacks",
   "type": "module",
   "main": "index.mjs",
@@ -29,14 +29,14 @@
   },
   "homepage": "https://github.com/trek10inc/cfn-event-tailer#readme",
   "dependencies": {
-    "@aws-sdk/client-cloudformation": "^3.782.0",
-    "@changesets/cli": "^2.29.7"
+    "@aws-sdk/client-cloudformation": "^3.782.0"
   },
   "bin": {
     "cfn-event-tailer": "index.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
+    "@changesets/cli": "^2.29.7",
     "@types/node": "^24.5.0",
     "typescript": "^5.9.2"
   }

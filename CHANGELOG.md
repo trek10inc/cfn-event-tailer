@@ -1,5 +1,11 @@
 # cfn-event-tailer
 
+## 0.1.2
+
+### Patch Changes
+
+- remove @changesets/cli from dependencies
+
 ## 0.1.1
 
 ### Patch Changes
