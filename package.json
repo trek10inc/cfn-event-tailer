@@ -1,6 +1,6 @@
 {
   "name": "cfn-event-tailer",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Tail the events of a CloudFormation stack, including nested stacks",
   "type": "module",
   "main": "index.mjs",

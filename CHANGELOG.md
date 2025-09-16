@@ -1,5 +1,11 @@
 # cfn-event-tailer
 
+## 0.1.3
+
+### Patch Changes
+
+- fix stdout column definition
+
 ## 0.1.2
 
 ### Patch Changes
