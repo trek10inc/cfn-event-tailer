@@ -14,7 +14,7 @@ function main() {
   const stackName = process.argv[2];
   if (!stackName) showUsageAndExit();
   tailStackEvents(process.argv[2]).catch((err) => {
-    console.error(err);
+    console.error(`${err}`);
     process.exit(1);
   });
 }
