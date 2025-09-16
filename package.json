@@ -12,7 +12,7 @@
     "types": "tsc",
     "change": "changeset add",
     "version": "changeset version",
-    "release": "changeset publish"
+    "release": "npm publish"
   },
   "keywords": [
     "cfn",
