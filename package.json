@@ -1,12 +1,18 @@
 {
   "name": "cfn-event-tailer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tail the events of a CloudFormation stack, including nested stacks",
   "type": "module",
   "main": "index.mjs",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/trek10inc/cfn-event-tailer.git"
+  },
+  "scripts": {
+    "types": "tsc",
+    "change": "changeset add",
+    "version": "changeset version",
+    "release": "changeset publish"
   },
   "keywords": [
     "cfn",
@@ -23,13 +29,15 @@
   },
   "homepage": "https://github.com/trek10inc/cfn-event-tailer#readme",
   "dependencies": {
-    "@aws-sdk/client-cloudformation": "^3.782.0"
+    "@aws-sdk/client-cloudformation": "^3.782.0",
+    "@changesets/cli": "^2.29.7"
   },
   "bin": {
     "cfn-event-tailer": "index.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
-    "@types/node": "^24.5.0"
+    "@types/node": "^24.5.0",
+    "typescript": "^5.9.2"
   }
 }
