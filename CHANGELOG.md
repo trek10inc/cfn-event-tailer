@@ -1,4 +1,4 @@
-# cfn-changeset-viewer
+# cfn-event-tailer
 
 ## 0.1.1
 
