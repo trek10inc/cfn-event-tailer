@@ -1,5 +1,11 @@
 # cfn-event-tailer
 
+## 0.1.4
+
+### Patch Changes
+
+- fix new stack support
+
 ## 0.1.3
 
 ### Patch Changes
