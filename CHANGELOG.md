@@ -1,5 +1,11 @@
 # cfn-event-tailer
 
+## 0.1.5
+
+### Patch Changes
+
+- fix(cicd): use oidc trusted access for release
+
 ## 0.1.4
 
 ### Patch Changes

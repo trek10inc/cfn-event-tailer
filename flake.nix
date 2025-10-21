@@ -3,7 +3,7 @@
 
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixpkgs.url = "github:NixOS/nixpkgs/release-24.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
   outputs =
     inputs@{ self, flake-parts, ... }:
@@ -11,7 +11,7 @@
       perSystem =
         { self', pkgs, ... }:
         let
-          buildNpmPackage = pkgs.buildNpmPackage.override { nodejs = pkgs.nodejs_22; };
+          buildNpmPackage = pkgs.buildNpmPackage.override { nodejs = pkgs.nodejs_24; };
         in
         {
           packages = {
