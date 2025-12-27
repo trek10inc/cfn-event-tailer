@@ -27,7 +27,10 @@
           };
 
           devShells.default = pkgs.mkShell {
-            packages = [ pkgs.awscli2 ];
+            packages = [
+              pkgs.awscli2
+              pkgs.nodejs_24
+            ];
             inputsFrom = [ self'.packages.default ];
           };
         };
